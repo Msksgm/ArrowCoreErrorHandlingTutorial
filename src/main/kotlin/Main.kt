@@ -1,3 +1,5 @@
+import arrow.core.computations.nullable
+
 fun main(args: Array<String>) {
     println("Hello World!")
 
@@ -10,6 +12,19 @@ object Lettuce
 object Knife
 object Salad
 
-fun takeFoodFromRefrigerator(): Lettuce = TODO()
-fun getKnife(): Knife = TODO()
-fun prepare(tool: Knife, ingredient: Lettuce): Salad = TODO()
+fun takeFoodFromRefrigerator(): Lettuce? = null
+fun getKnife(): Knife? = null
+fun prepare(tool: Knife, ingredient: Lettuce): Salad? {
+    val lettuce = takeFoodFromRefrigerator()
+    val knife = getKnife()
+    val salad = knife?.let { k -> lettuce?.let { l -> prepare(k, l) } }
+    return salad
+}
+
+suspend fun prepareLunch(): Salad? =
+    nullable {
+        val lettuce = takeFoodFromRefrigerator().bind()
+        val knife = getKnife().bind()
+        val salad = prepare(knife, lettuce).bind()
+        salad
+    }
