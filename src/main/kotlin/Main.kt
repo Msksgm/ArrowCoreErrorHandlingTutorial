@@ -1,3 +1,7 @@
+import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.computations.either
 import arrow.core.computations.nullable
 
 fun main(args: Array<String>) {
@@ -12,19 +16,25 @@ object Lettuce
 object Knife
 object Salad
 
-fun takeFoodFromRefrigerator(): Lettuce? = null
-fun getKnife(): Knife? = null
-fun prepare(tool: Knife, ingredient: Lettuce): Salad? {
-    val lettuce = takeFoodFromRefrigerator()
-    val knife = getKnife()
-    val salad = knife?.let { k -> lettuce?.let { l -> prepare(k, l) } }
-    return salad
+
+sealed class CookingException {
+    object NastyLettuce : CookingException()
+    object KnifeIsDull : CookingException()
+    data class InsufficientAmountOfLettuce(val quantityInGrams: Int) : CookingException()
 }
 
-suspend fun prepareLunch(): Salad? =
-    nullable {
+typealias NastyLettuce = CookingException.NastyLettuce
+typealias KnifeIsDull = CookingException.KnifeIsDull
+typealias InsufficientAmountOfLettuce = CookingException.InsufficientAmountOfLettuce
+
+fun takeFoodFromRefrigerator(): Either<NastyLettuce, Lettuce> = Right(Lettuce)
+fun getKnife(): Either<KnifeIsDull, Knife> = Right(Knife)
+fun lunch(knife: Knife, food: Lettuce): Either<InsufficientAmountOfLettuce, Salad> = Left(InsufficientAmountOfLettuce(5))
+
+suspend fun prepareEither(): Either<CookingException, Salad> =
+    either {
         val lettuce = takeFoodFromRefrigerator().bind()
         val knife = getKnife().bind()
-        val salad = prepare(knife, lettuce).bind()
+        val salad = lunch(knife, lettuce).bind()
         salad
     }
